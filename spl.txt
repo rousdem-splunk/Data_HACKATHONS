@@ -1,0 +1,16 @@
+`asc_stats` 
+|eval NumDownloadsTotal=if(isint(NumActiveInstallationsPrevDay),NumDownloadsTotal, NumVersions)
+| bin _time  span=1mon
+|stats max(NumDownloadsTotal) as Downloads by AddonName _time
+| table _time AddonName Downloads
+| sort 0 - Downloads
+| streamstats count as rank by _time
+| where rank<=100
+| eval Time=strftime('_time', "%Y-%m-%d")
+| xyseries AddonName Time  Downloads
+| search AddonName!="4.2"
+| fields - rank
+| untable AddonName Time Downloads
+| eventstats dc(Time) as Times by AddonName
+| search Times>=17
+| xyseries AddonName Time Downloads
